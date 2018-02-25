@@ -28,7 +28,10 @@ private[magnolia] object GlobalUtil {
     // also see https://github.com/scalamacros/paradise/issues/64
 
     val global = c.universe.asInstanceOf[Global]
-    val typer = c.asInstanceOf[runtime.Context].callsiteTyper.asInstanceOf[global.analyzer.Typer]
+    val typer = c
+      .asInstanceOf[runtime.Context]
+      .callsiteTyper
+      .asInstanceOf[global.analyzer.Typer]
     val ctx = typer.context
     val globalType = tpe.asInstanceOf[global.Type]
     val original = globalType.typeSymbol
@@ -36,34 +39,38 @@ private[magnolia] object GlobalUtil {
     val companion = original.companion.orElse {
       import global.{abort => aabort, _}
       implicit class PatchedContext(ctx: global.analyzer.Context) {
-        trait PatchedLookupResult { def suchThat(criterion: Symbol => Boolean): Symbol }
-        def patchedLookup(name: Name, expectedOwner: Symbol) = new PatchedLookupResult {
-          override def suchThat(criterion: Symbol => Boolean): Symbol = {
-            var res: Symbol = NoSymbol
-            var ctx = PatchedContext.this.ctx
-            while (res == NoSymbol && ctx.outer != ctx) {
-              // NOTE: original implementation says `val s = ctx.scope lookup name`
-              // but we can't use it, because Scope.lookup returns wrong results when the lookup is ambiguous
-              // and that triggers https://github.com/scalamacros/paradise/issues/64
-              val s = {
-                val lookupResult = ctx.scope.lookupAll(name).filter(criterion).toList
-                lookupResult match {
-                  case Nil          => NoSymbol
-                  case List(unique) => unique
-                  case _ =>
-                    aabort(
-                      s"unexpected multiple results for a companion symbol lookup for $original#{$original.id}"
-                    )
-                }
-              }
-              if (s != NoSymbol && s.owner == expectedOwner)
-                res = s
-              else
-                ctx = ctx.outer
-            }
-            res
-          }
+        trait PatchedLookupResult {
+          def suchThat(criterion: Symbol => Boolean): Symbol
         }
+        def patchedLookup(name: Name, expectedOwner: Symbol) =
+          new PatchedLookupResult {
+            override def suchThat(criterion: Symbol => Boolean): Symbol = {
+              var res: Symbol = NoSymbol
+              var ctx = PatchedContext.this.ctx
+              while (res == NoSymbol && ctx.outer != ctx) {
+                // NOTE: original implementation says `val s = ctx.scope lookup name`
+                // but we can't use it, because Scope.lookup returns wrong results when the lookup is ambiguous
+                // and that triggers https://github.com/scalamacros/paradise/issues/64
+                val s = {
+                  val lookupResult =
+                    ctx.scope.lookupAll(name).filter(criterion).toList
+                  lookupResult match {
+                    case Nil          => NoSymbol
+                    case List(unique) => unique
+                    case _ =>
+                      aabort(
+                        s"unexpected multiple results for a companion symbol lookup for $original#{$original.id}"
+                      )
+                  }
+                }
+                if (s != NoSymbol && s.owner == expectedOwner)
+                  res = s
+                else
+                  ctx = ctx.outer
+              }
+              res
+            }
+          }
       }
 
       ctx.patchedLookup(original.name.companionName, owner) suchThat { sym =>
@@ -71,6 +78,8 @@ private[magnolia] object GlobalUtil {
       }
     }
 
-    global.gen.mkAttributedRef(globalType.prefix, companion).asInstanceOf[c.Tree]
+    global.gen
+      .mkAttributedRef(globalType.prefix, companion)
+      .asInstanceOf[c.Tree]
   }
 }

@@ -1,7 +1,6 @@
 package spray.json
 
 import spray.magnolia._
-import spray.json._
 
 import scala.language.experimental.macros
 

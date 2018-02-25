@@ -131,14 +131,16 @@ trait Param[Typeclass[_], Type] {
   *  @tparam Typeclass  type constructor for the typeclass being derived
   *  @tparam Type       generic type of this parameter */
 abstract class CaseClass[Typeclass[_], Type] private[magnolia] (
-                                                                 val typeName: TypeName,
-                                                                 val isObject: Boolean,
-                                                                 val isValueClass: Boolean,
-                                                                 parametersArray: Array[Param[Typeclass, Type]],
-                                                                 annotationsArray: Array[Any]
-                                                               ) {
+    val typeName: TypeName,
+    val isObject: Boolean,
+    val isValueClass: Boolean,
+    parametersArray: Array[Param[Typeclass, Type]],
+    annotationsArray: Array[Any]
+) {
 
-  override def toString: String = s"CaseClass(${typeName.full}, ${parameters.mkString(",")})"
+  override def toString: String =
+    s"CaseClass(${typeName.full}, ${parameters.mkString(",")})"
+
   /** constructs a new instance of the case class type
     *
     *  This method will be implemented by the Magnolia macro to make it possible to construct
@@ -152,7 +154,8 @@ abstract class CaseClass[Typeclass[_], Type] private[magnolia] (
     *  @param makeParam  lambda for converting a generic [[Param]] into the value to be used for
     *                    this parameter in the construction of a new instance of the case class
     *  @return  a new instance of the case class */
-  final def construct[Return](makeParam: Param[Typeclass, Type] => Return): Type =
+  final def construct[Return](
+      makeParam: Param[Typeclass, Type] => Return): Type =
     rawConstruct(parameters map makeParam)
 
   /** constructs a new instance of the case class type
@@ -193,12 +196,13 @@ abstract class CaseClass[Typeclass[_], Type] private[magnolia] (
   *  @tparam Typeclass  type constructor for the typeclass being derived
   *  @tparam Type             generic type of this parameter */
 final class SealedTrait[Typeclass[_], Type](
-                                             val typeName: TypeName,
-                                             subtypesArray: Array[Subtype[Typeclass, Type]],
-                                             annotationsArray: Array[Any]
-                                           ) {
+    val typeName: TypeName,
+    subtypesArray: Array[Subtype[Typeclass, Type]],
+    annotationsArray: Array[Any]
+) {
 
-  override def toString: String = s"SealedTrait($typeName, Array[${subtypes.mkString(",")}])"
+  override def toString: String =
+    s"SealedTrait($typeName, Array[${subtypes.mkString(",")}])"
 
   /** a sequence of all the subtypes of this sealed trait */
   def subtypes: Seq[Subtype[Typeclass, Type]] = subtypesArray
@@ -213,7 +217,8 @@ final class SealedTrait[Typeclass[_], Type](
     *                 matches
     *  @return  the result of applying the `handle` lambda to subtype of the sealed trait which
     *           matches the parameter `value` */
-  def dispatch[Return](value: Type)(handle: Subtype[Typeclass, Type] => Return): Return = {
+  def dispatch[Return](value: Type)(
+      handle: Subtype[Typeclass, Type] => Return): Return = {
     @tailrec def rec(ix: Int): Return =
       if (ix < subtypesArray.length) {
         val sub = subtypesArray(ix)
@@ -247,4 +252,5 @@ final case class TypeName(owner: String, short: String) {
   * @param typeNamePart If non-empty restricts the output generation to types
   *                     whose full name contains the given [[String]]
   */
-final class debug(typeNamePart: String = "") extends scala.annotation.StaticAnnotation
+final class debug(typeNamePart: String = "")
+    extends scala.annotation.StaticAnnotation

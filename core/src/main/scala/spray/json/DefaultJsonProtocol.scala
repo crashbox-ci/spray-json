@@ -19,12 +19,12 @@ package spray.json
 
 /**
   * Provides all the predefined JsonFormats.
- */
+  */
 trait DefaultJsonProtocol
-        extends BasicFormats
-        with StandardFormats
-        with CollectionFormats
-        with AdditionalFormats
-          with DerivedFormats
+    extends BasicFormats
+    with StandardFormats
+    with CollectionFormats
+    with AdditionalFormats
+    with DerivedFormats
 
 object DefaultJsonProtocol extends DefaultJsonProtocol

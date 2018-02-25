@@ -123,7 +123,6 @@ object Tests extends DefaultJsonProtocol with Util {
     )
   }
 
-
   {
     println("Serializing as sealed trait an deserializing as child")
     val expr: Expr = Plus(Value(42), Plus(Zero(), One))
